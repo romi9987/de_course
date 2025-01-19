@@ -1,0 +1,6 @@
+pandas
+jupyter
+psycopg
+polars
+sqlalchemy
+psycopg2-binary
