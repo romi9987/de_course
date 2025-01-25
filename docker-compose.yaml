@@ -1,0 +1,18 @@
+services:
+  pgdatabase:
+    image: postgres:13
+    environment:
+      - POSTGRES_USER=romi9987
+      - POSTGRES_PASSWORD=Agnieszkaf82!
+      - POSTGRES_DB=ny_taxi
+    volumes:
+      - "./ny_taxi_postgres_data:/var/lib/postgresql/data:rw" # rw = rewrite
+    ports:
+      - "5432:5432"
+  pgadmin:
+    image: dpage/pgadmin4
+    environment:
+      - PGADMIN_DEFAULT_EMAIL=romi9987@admin.com
+      - PGADMIN_DEFAULT_PASSWORD=Agnieszkaf82!
+    ports:
+      - "8080:80"
