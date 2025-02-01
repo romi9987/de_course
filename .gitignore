@@ -1,9 +1,9 @@
 venv
-ny_taxi_postgres_data
+data
+conf/*.json
 .ipynb_checkpoints
 *.csv
 *.parquet
-conf/*.json
 .terraform
 *.hcl
 *.tfstate
