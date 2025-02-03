@@ -6,3 +6,7 @@ sqlalchemy
 psycopg2-binary
 pyarrow
 fastparquet
+
+
+apache-airflow-providers-google
+requests
