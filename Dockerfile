@@ -1,9 +1,22 @@
-FROM python:3.9
+FROM apache/airflow:2.10.4-python3.8
 
-RUN apt-get install wget
-RUN pip install pandas sqlalchemy psycopg2 pyarrow fastparquet
+# Define Airflow home directory
+ENV AIRFLOW_HOME=/opt/airflow
 
-WORKDIR /app
-COPY ingest_data.py ingest_data.py
+# Use root to create directories and set permissions
+USER root
+RUN mkdir -p /opt/airflow/shared && chmod -R 777 /opt/airflow/shared
 
-ENTRYPOINT [ "python", "ingest_data.py" ]
+# Ensure Google Cloud secrets JSON is readable
+COPY ./conf/airflow_gcp_secrets.json /opt/airflow/google/airflow_gcp_secrets.json
+RUN chmod 644 /opt/airflow/google/airflow_gcp_secrets.json
+
+# Switch to the correct Airflow user
+USER 50000:0
+
+# Set working directory
+WORKDIR $AIRFLOW_HOME
+
+# Install dependencies
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt

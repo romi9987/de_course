@@ -9,3 +9,5 @@ conf/*.json
 *.tfstate
 *.tfstate.backup
 template.tf
+*.pyc
+__pycache__

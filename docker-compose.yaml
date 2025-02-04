@@ -1,16 +1,18 @@
 volumes:
-  kestra-data:
-    driver: local
+  postgres-db-volume:
+  shared-data:
+  airflow-logs:
+  ny-taxi-postgres-data:
 
 services:
-  pgdatabase:
-    image: postgres:latest
+  postgres:
+    image: postgres:13
     environment:
-      - POSTGRES_USER=root
-      - POSTGRES_PASSWORD=root
-      - POSTGRES_DB=ny_taxi
+      - POSTGRES_USER=airflow
+      - POSTGRES_PASSWORD=airflow
+      - POSTGRES_DB=airflow
     volumes:
-      - "./data/ny_taxi_postgres_data:/var/lib/postgresql/data:rw"
+      - ./data/postgres-db-volume:/var/lib/postgresql/data:rw
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -d $${POSTGRES_DB} -U $${POSTGRES_USER}"]
       interval: 30s
@@ -18,48 +20,131 @@ services:
       retries: 10
     ports:
       - "5432:5432"
+    networks:
+      - airflow
 
-  kestra:
-    image: kestra/kestra:latest
-    pull_policy: always
-    user: "root"
-    command: server standalone
-    volumes:
-      - kestra-data:/app/storage
-      - /var/run/docker.sock:/var/run/docker.sock
-      - /tmp/kestra-wd:/tmp/kestra-wd
+  pgdatabase:
+    image: postgres:13
     environment:
-      KESTRA_CONFIGURATION: |
-        datasources:
-          postgres:
-            url: jdbc:postgresql://pgdatabase:5432/postgres
-            driverClassName: org.postgresql.Driver
-            username: root
-            password: root
-        kestra:
-          server:
-            basicAuth:
-              enabled: false
-              username: "admin@kestra.io" # it must be a valid email address
-              password: kestra
-          repository:
-            type: postgres
-          storage:
-            type: local
-            local:
-              basePath: "/app/storage"
-          queue:
-            type: postgres
-          tasks:
-            tmpDir:
-              path: /tmp/kestra-wd/tmp
-          url: http://localhost:8080/
+      - POSTGRES_USER=root
+      - POSTGRES_PASSWORD=root
+      - POSTGRES_DB=ny_taxi
+    volumes:
+      - "./data/ny_taxi_postgres_data:/var/lib/postgresql/data:rw"
+    ports:
+      - "5433:5432"
+    networks:
+      - airflow
+
+  init-airflow:
+    build: .
+    user: "50000:0"
+    depends_on:
+      - postgres
+    environment:
+      - AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=postgresql+psycopg2://airflow:airflow@postgres/airflow
+      - AIRFLOW__CORE__FERNET_KEY=aXWrNTL8GqfWk1AkRedP4ewFLWreNuGnD5mrFFelTts=
+    command: >
+      bash -c "
+      until pg_isready -h postgres -U airflow; do
+        echo 'Waiting for PostgreSQL to be ready...';
+        sleep 2;
+      done;
+      airflow db migrate && airflow connections create-default-connections &&
+      airflow users create -r Admin -u admin -p admin -e admin@example.com -f admin -l airflow &&
+      airflow users create -r Admin -u airflow -p airflow -e airflow@example.com -f airflow -l airflow &&
+      echo 'Initialization complete' &&
+      touch /opt/airflow/shared/initialized
+      "
+    healthcheck:
+      test: ["CMD-SHELL", "airflow db check && echo 'Database ready!'"]
+      interval: 10s
+      timeout: 10s
+      retries: 5
+      start_period: 10s
+    volumes:
+      - shared-data:/opt/airflow/shared
+    networks:
+      - airflow
+
+  scheduler:
+    build: .
+    command: >
+      bash -c "
+      until [ -f /opt/airflow/shared/initialized ]; do
+          echo 'Waiting for init-airflow to complete...';
+          sleep 2;
+      done;
+      airflow scheduler
+      "
+    depends_on:
+      - postgres
+      - init-airflow
+    environment:
+      - AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=postgresql+psycopg2://airflow:airflow@postgres/airflow
+      - AIRFLOW__CORE__FERNET_KEY=aXWrNTL8GqfWk1AkRedP4ewFLWreNuGnD5mrFFelTts=
+      - AIRFLOW_UID=50000
+      - COMPOSE_PROJECT_NAME=airflow2025
+      - AIRFLOW__CORE__EXECUTOR=LocalExecutor
+      - AIRFLOW__SCHEDULER__SCHEDULER_HEARTBEAT_SEC=10
+      - AIRFLOW_CONN_METADATA_DB=postgres+psycopg2://airflow:airflow@postgres:5432/airflow
+      - AIRFLOW_VAR__METADATA_DB_SCHEMA=airflow
+      - _AIRFLOW_WWW_USER_CREATE=True
+      - _AIRFLOW_WWW_USER_USERNAME=airflow
+      - _AIRFLOW_WWW_USER_PASSWORD=airflow
+      - AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION=True
+      - AIRFLOW__CORE__LOAD_EXAMPLES=False       
+    volumes:
+      - ./airflow/dags:/opt/airflow/dags
+      - airflow-logs:/opt/airflow/logs
+      - ./conf/airflow_gcp_secrets.json:/opt/airflow/google/airflow_gcp_secrets.json:ro
+      - shared-data:/opt/airflow/shared
+    networks:
+      - airflow
+
+  webserver:
+    build: .
+    command: >
+      bash -c "
+      until [ -f /opt/airflow/shared/initialized ]; do
+          echo 'Waiting for init-airflow to complete...';
+          sleep 2;
+      done;
+      airflow webserver
+      "
+    depends_on:
+      - postgres
+      - init-airflow
+      - scheduler
+    environment:
+      - AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=postgresql+psycopg2://airflow:airflow@postgres/airflow
+      - AIRFLOW__CORE__FERNET_KEY=aXWrNTL8GqfWk1AkRedP4ewFLWreNuGnD5mrFFelTts=
+      - AIRFLOW_UID=50000
+      - COMPOSE_PROJECT_NAME=airflow2025
+      - AIRFLOW__CORE__EXECUTOR=LocalExecutor
+      - AIRFLOW__SCHEDULER__SCHEDULER_HEARTBEAT_SEC=10
+      - AIRFLOW_CONN_METADATA_DB=postgres+psycopg2://airflow:airflow@postgres:5432/airflow
+      - AIRFLOW_VAR__METADATA_DB_SCHEMA=airflow
+      - _AIRFLOW_WWW_USER_CREATE=True
+      - _AIRFLOW_WWW_USER_USERNAME=airflow
+      - _AIRFLOW_WWW_USER_PASSWORD=airflow
+      - AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION=True
+      - AIRFLOW__CORE__LOAD_EXAMPLES=False   
+    volumes:
+      - ./airflow/dags:/opt/airflow/dags
+      - airflow-logs:/opt/airflow/logs
+      - ./conf/airflow_gcp_secrets.json:/opt/airflow/google/airflow_gcp_secrets.json:ro
+      - shared-data:/opt/airflow/shared            
+    user: "50000:0"
     ports:
       - "8080:8080"
-      - "8081:8081"
-    depends_on:
-      pgdatabase:
-        condition: service_started
+    healthcheck:
+      test: [ "CMD-SHELL", "[ -f /home/airflow/airflow-webserver.pid ]" ]
+      interval: 30s
+      timeout: 30s
+      retries: 3
+    networks:
+      - airflow
 
   pgadmin:
     image: dpage/pgadmin4
@@ -71,4 +156,12 @@ services:
     ports:
       - "8090:80"
     depends_on:
-      - pgdatabase 
+      - postgres
+      - pgdatabase
+    networks:
+      - airflow
+
+networks:
+  airflow:
+    external: true
+    name: airflow2025_default
