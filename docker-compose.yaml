@@ -43,7 +43,7 @@ services:
       - postgres
     environment:
       - AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=postgresql+psycopg2://airflow:airflow@postgres/airflow
-      - AIRFLOW__CORE__FERNET_KEY=aXWrNTL8GqfWk1AkRedP4ewFLWreNuGnD5mrFFelTts=
+      - AIRFLOW__CORE__FERNET_KEY=''
     command: >
       bash -c "
       until pg_isready -h postgres -U airflow; do
