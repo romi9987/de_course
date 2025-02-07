@@ -95,7 +95,7 @@ services:
       - AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION=True
       - AIRFLOW__CORE__LOAD_EXAMPLES=False       
     volumes:
-      - ./airflow/dags:/opt/airflow/dags
+      - ./dags:/opt/airflow/dags
       - airflow-logs:/opt/airflow/logs
       - ./conf/airflow_gcp_secrets.json:/opt/airflow/google/airflow_gcp_secrets.json:ro
       - shared-data:/opt/airflow/shared
@@ -118,7 +118,7 @@ services:
       - scheduler
     environment:
       - AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=postgresql+psycopg2://airflow:airflow@postgres/airflow
-      - AIRFLOW__CORE__FERNET_KEY=aXWrNTL8GqfWk1AkRedP4ewFLWreNuGnD5mrFFelTts=
+      - AIRFLOW__CORE__FERNET_KEY=''
       - AIRFLOW_UID=50000
       - COMPOSE_PROJECT_NAME=airflow2025
       - AIRFLOW__CORE__EXECUTOR=LocalExecutor
@@ -131,7 +131,7 @@ services:
       - AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION=True
       - AIRFLOW__CORE__LOAD_EXAMPLES=False   
     volumes:
-      - ./airflow/dags:/opt/airflow/dags
+      - ./dags:/opt/airflow/dags
       - airflow-logs:/opt/airflow/logs
       - ./conf/airflow_gcp_secrets.json:/opt/airflow/google/airflow_gcp_secrets.json:ro
       - shared-data:/opt/airflow/shared            
