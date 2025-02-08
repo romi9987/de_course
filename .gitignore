@@ -1,5 +1,8 @@
+.env
 venv
 data
+logs
+plugins
 conf/*.json
 .ipynb_checkpoints
 *.csv

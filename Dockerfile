@@ -6,17 +6,25 @@ ENV AIRFLOW_HOME=/opt/airflow
 # Use root to create directories and set permissions
 USER root
 RUN mkdir -p /opt/airflow/shared && chmod -R 777 /opt/airflow/shared
+RUN apt-get update -qq && apt-get install vim -qqq
+
+# Copy .env file to the container
+COPY .env /opt/airflow/.env
 
 # Ensure Google Cloud secrets JSON is readable
 COPY ./conf/airflow_gcp_secrets.json /opt/airflow/google/airflow_gcp_secrets.json
 RUN chmod 644 /opt/airflow/google/airflow_gcp_secrets.json
 
 # Switch to the correct Airflow user
-USER 50000:0
+USER airflow
 
 # Set working directory
 WORKDIR $AIRFLOW_HOME
 
-# Install dependencies
+# Source the .env file to export environment variables
+RUN echo "source /opt/airflow/.env" >> ~/.bashrc
+
+# Install dependencies - --no-cache-dir means that we dont want to save it to cash (it will make it bigger)
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir pandas polars sqlalchemy psycopg2-binary requests
