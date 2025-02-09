@@ -1,5 +1,8 @@
+.env
 venv
 data
+logs
+plugins
 conf/*.json
 .ipynb_checkpoints
 *.csv
@@ -9,3 +12,5 @@ conf/*.json
 *.tfstate
 *.tfstate.backup
 template.tf
+*.pyc
+__pycache__

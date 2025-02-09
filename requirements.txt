@@ -1,8 +1,4 @@
-pandas
-jupyter
-psycopg
-polars
-sqlalchemy
-psycopg2-binary
 pyarrow
-fastparquet
+apache-airflow-providers-google
+plyvel #enable optional provider feature
+cryptography #generate cryptography key for airflow

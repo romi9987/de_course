@@ -1,6 +1,6 @@
 variable "credentials" {
   description = "GCP Credentials"
-  default = "./conf/gcp_secrets.json"
+  default = "./conf/terraform_gcp_secrets.json"
 }
 
 variable "project" {
