@@ -27,4 +27,4 @@ RUN echo "source /opt/airflow/.env" >> ~/.bashrc
 # Install dependencies - --no-cache-dir means that we dont want to save it to cash (it will make it bigger)
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
-RUN pip install --no-cache-dir pandas polars sqlalchemy psycopg2-binary requests
+RUN pip install --no-cache-dir pandas sqlalchemy psycopg2-binary
