@@ -18,13 +18,13 @@ path_to_local_home = os.environ.get("AIRFLOW_HOME", "/opt/airflow/")
 upload_workflow = DAG(
     "GCP_upload_yellow",
     schedule_interval="0 6 2 * *",
-    start_date=datetime(2024, 2, 1),
-    end_date=datetime(2024, 7, 1),
+    start_date=datetime(2019, 1, 1),
+    end_date=datetime(2020, 12, 31),
     catchup=True, 
     max_active_runs=1,
 )
 
-output_file_template = 'yellow_tripdata_{{ execution_date.strftime(\'%Y_%m\') }}.parquet'
+output_file_template = 'output_{{ execution_date.strftime(\'%Y_%m\') }}.parquet'
 url_template = "https://d37ci6vzurychx.cloudfront.net/trip-data/yellow_tripdata_{{ execution_date.strftime(\'%Y-%m\') }}.parquet"
 
 
@@ -50,7 +50,7 @@ with upload_workflow:
         python_callable=upload_to_gcs,
         op_kwargs={
             "bucket": bucket,
-            "object_name": f"raw/{output_file_template}",
+            "object_name": f"yellow/{output_file_template}",
             "local_file": f"{path_to_local_home}/{output_file_template}",
             "gcp_conn_id": "gcp-airflow"
         },
