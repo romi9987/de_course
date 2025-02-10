@@ -26,7 +26,7 @@ dag = DAG(
     "GCP_ingestion_yellow",
     schedule_interval="0 6 2 * *",
     start_date=datetime(2019, 1, 1),
-    end_date=datetime(2019, 3, 1),
+    end_date=datetime(2020, 12, 31),
     catchup=True, 
     max_active_runs=1,
 )

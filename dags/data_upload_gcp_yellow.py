@@ -50,7 +50,7 @@ with upload_workflow:
         python_callable=upload_to_gcs,
         op_kwargs={
             "bucket": bucket,
-            "object_name": f"raw/{output_file_template}",
+            "object_name": f"{output_file_template}",
             "local_file": f"{path_to_local_home}/{output_file_template}",
             "gcp_conn_id": "gcp-airflow"
         },
