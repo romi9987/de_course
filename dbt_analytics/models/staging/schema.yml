@@ -1,0 +1,10 @@
+version: 2
+
+sources:
+  - name: staging
+    database: dbt-project-450620
+    schema: dbt_trips_all
+
+    tables:
+      - name: green_tripdata_ext
+      - name: yellow_tripdata_ext
