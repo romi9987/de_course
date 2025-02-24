@@ -198,7 +198,7 @@ models:
           - accepted_values:
               values: "{{ var('payment_type_values') }}"
               severity: warn
-              quote: false 
+              quote: false
 
       - name: payment_type_description
         data_type: string
