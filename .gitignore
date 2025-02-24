@@ -14,3 +14,4 @@ conf/*.json
 template.tf
 *.pyc
 __pycache__
+.duckdb
